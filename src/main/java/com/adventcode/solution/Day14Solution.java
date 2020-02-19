@@ -14,11 +14,12 @@ import com.adventcode.solution.dto.Reaction;
  *
  */
 public class Day14Solution {
-	private static final String INPUT = "171 ORE => 8 CNZTR\r\n" + "7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL\r\n" + "114 ORE => 4 BHXH\r\n" + "14 VRPVC => 6 BMBT\r\n"
-			+ "6 BHXH, 18 KTJDG, 12 WPTQ, 7 PLWSL, 31 FHTLT, 37 ZDVW => 1 FUEL\r\n" + "6 WPTQ, 2 BMBT, 8 ZLQW, 18 KTJDG, 1 XMNCP, 6 MZWV, 1 RJRHP => 6 FHTLT\r\n"
-			+ "15 XDBXC, 2 LTCX, 1 VRPVC => 6 ZLQW\r\n" + "13 WPTQ, 10 LTCX, 3 RJRHP, 14 XMNCP, 2 MZWV, 1 ZLQW => 1 ZDVW\r\n" + "5 BMBT => 4 WPTQ\r\n" + "189 ORE => 9 KTJDG\r\n"
-			+ "1 MZWV, 17 XDBXC, 3 XCVML => 2 XMNCP\r\n" + "12 VRPVC, 27 CNZTR => 2 XDBXC\r\n" + "15 KTJDG, 12 BHXH => 5 XCVML\r\n" + "3 BHXH, 2 VRPVC => 7 MZWV\r\n" + "121 ORE => 7 VRPVC\r\n"
-			+ "7 XCVML => 6 RJRHP\r\n" + "5 BHXH, 4 VRPVC => 5 LTCX";
+	private static final String INPUT = "10 ORE => 10 A\r\n" + 
+			"1 ORE => 1 B\r\n" + 
+			"7 A, 1 B => 1 C\r\n" + 
+			"7 A, 1 C => 1 D\r\n" + 
+			"7 A, 1 D => 1 E\r\n" + 
+			"7 A, 1 E => 1 FUEL";
 
 	private static final Map<String, Reaction> INPUT_IN_MAP = new HashMap<>();
 
@@ -56,7 +57,8 @@ public class Day14Solution {
 	public static void main(String[] args) {
 		Day14Solution day14Solution = new Day14Solution(INPUT);
 
-		System.out.println(day14Solution.calculateOneUnitOfFuelWithMemo(new Chemical("FUEL", 1), new HashMap<>()));
+		System.out.println("Minimum amount of ORE required: " + day14Solution.calculateOneUnitOfFuel(new Chemical("FUEL", 1), new HashMap<>()));
+		System.out.println("Maximum amount of FUEL can be produced : " + day14Solution.maximumAmountOfFuelProduced(1000000000000L));
 	}
 
 	/**
@@ -66,7 +68,7 @@ public class Day14Solution {
 	 * @param inventory
 	 * @return total ore required.
 	 */
-	public long calculateOneUnitOfFuelWithMemo(Chemical ingredient, Map<String, Long> inventory) {
+	public long calculateOneUnitOfFuel(Chemical ingredient, Map<String, Long> inventory) {
 		if (ingredient.getName().equals("ORE")) {
 			return ingredient.getQuantity();
 		} else if (inventory.getOrDefault(ingredient.getName(), 0L) > ingredient.getQuantity()) {
@@ -81,7 +83,7 @@ public class Day14Solution {
 			long timesReaction = (long) Math.ceil(needed * 1.0 / reaction.getOuptut().getQuantity());
 			for (Chemical reagent : reaction.getInputs()) {
 				long reagentTotalQuantity = reagent.getQuantity() * timesReaction;
-				long value = calculateOneUnitOfFuelWithMemo(new Chemical(reagent.getName(), reagentTotalQuantity), inventory);
+				long value = calculateOneUnitOfFuel(new Chemical(reagent.getName(), reagentTotalQuantity), inventory);
 				oreNeeded = oreNeeded + value;
 			}
 
@@ -89,5 +91,28 @@ public class Day14Solution {
 			inventory.put(ingredient.getName(), quantity + reaction.getOuptut().getQuantity() * timesReaction - needed);
 			return oreNeeded;
 		}
+	}
+
+	/**
+	 * To calculate the maximum amount of fuel that can be produced with provided
+	 * ORE.
+	 * 
+	 * @param cargoSize Maximum amount of cargo size.
+	 * @return maximum amount of fuel that can be produced.
+	 */
+	public long maximumAmountOfFuelProduced(Long cargoSize) {
+		long upperLimit = cargoSize;
+		long lowerLimit = 0;
+		long pivot = 0;
+		while ((upperLimit - lowerLimit) > 1) {
+			pivot = (lowerLimit + upperLimit) / 2;
+			long oreNeeded = calculateOneUnitOfFuel(new Chemical("FUEL", pivot), new HashMap<>());
+			if (oreNeeded <= cargoSize) {
+				lowerLimit = pivot;
+			} else {
+				upperLimit = pivot;
+			}
+		}
+		return Math.min(lowerLimit, pivot);
 	}
 }
